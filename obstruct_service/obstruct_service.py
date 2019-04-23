@@ -1,4 +1,4 @@
-#last edited by J.Shtalenkova on 2.19.2019
+#last edited by J.Shtalenkova on 3.25.2019
 
 import os
 import asyncio
@@ -49,8 +49,8 @@ class StopperPV(PVGroup):
 # 'left' and 'right' jaw nomenclature used for all stoppers; vertical stoppers 'left'==bottom, 'right'==top; 'left' jaw takes on negative values, 'right' jaw - positive
 class CollimatorPV(PVGroup):
 
-    setgap = pvproperty(value=0.0, name=':SETGAP')
-    getgap = pvproperty(value=0.0, name=':GETGAP', read_only=True)
+    setgap = pvproperty(value=0.0, name=':SETGAP', lower_disp_limit=0.0)
+    getgap = pvproperty(value=0.0, name=':GETGAP', read_only=True, lower_disp_limit=0.0)
     setcenter = pvproperty(value=0.0, name=':SETCENTER')
     getcenter = pvproperty(value=0.0, name=':GETCENTER', read_only=True)
     
@@ -179,6 +179,7 @@ class ObstructorService(simulacrum.Service):
         {v:k for k, v in d}
         return d 
 
+
     def recv_pytao():
         for line in self.cmd_socket.recv_pyobj()['result']:
             print(line)
@@ -188,11 +189,12 @@ class ObstructorService(simulacrum.Service):
         #name converters 
         self.stopper_names = {'TD11':'DUMP:LI21:305', 'TDUND':'DUMP:LTU1:970'} 
         self.screen_names =  {'YAG02':'YAGS:IN20:241'}
-        self.x_collimator_names = {'CE11': 'COLL:LI21:235'}
+        
+        
+        sel_.x_collimator_names = {'CE11': 'COLL:LI21:235'}
         self.y_collimator_names = {}
         self.limit_names = ['x1_limit', 'x2_limit', 'y1_limit', 'y2_limit']
         self.lim = [0.0, 0.0, 0.0, 0.0]
-
         #network stuff <consult M. Gibbs> 
         self.ctx = Context.instance()
         #cmd socket is a synchronous socket, we don't want the asyncio context.
@@ -217,6 +219,8 @@ class ObstructorService(simulacrum.Service):
         y_collimator_pvs = {device_name: CollimatorPV(device_name, simulacrum.util.convert_device_to_element(device_name), 
                         self.on_obstructor_change, left_initial_value=self.init_sts[device_name][0], right_initial_value=self.init_sts[device_name][1], prefix=device_name)
                     for device_name in self.y_collimator_names.values()}
+
+
         pvs.update(stopper_pvs)
         pvs.update(x_collimator_pvs)
         pvs.update(y_collimator_pvs)
